@@ -14,7 +14,7 @@ services:
         value: false
 
       - key: APP_KEY
-        sync: false  # Render will let you generate it manually
+        sync: false  # You’ll set this manually after first deploy (or generate one locally)
 
       # Database Configuration (PostgreSQL)
       - key: DB_CONNECTION
@@ -28,12 +28,12 @@ services:
       - key: DB_USERNAME
         value: fintrack1
       - key: DB_PASSWORD
-        value: Q2ZASbo3J2c2oHwq8sgCeNMXbsOOjB6F
+        sync: false  # Never expose raw DB password in the file; set it in Render Dashboard
 
       # URL (important for Laravel)
       - key: APP_URL
         value: https://fintrack-api.onrender.com
 
-      # Make sure Laravel runs correctly on Render
-      - key: PORT
-        value: 10000
+    postDeployCommand: |
+      php artisan migrate --force
+      php artisan db:seed --force
