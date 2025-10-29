@@ -3,26 +3,23 @@ services:
     name: fintrack-api
     env: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: Dockerfile
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: false
       - key: APP_KEY
-        value: your-app-key-here # Replace with a real key or generate on Render
+        value: enter_your_app_key_here
       - key: DB_CONNECTION
-        value: pgsql
+        value: mysql
       - key: DB_HOST
-        value: dpg-d40rq2mmcj7s73ep9rf0-a.virginia-postgres.render.com
+        value: your_mysql_host
       - key: DB_PORT
-        value: 5432
+        value: 3306
       - key: DB_DATABASE
-        value: fintrack_3fzq
+        value: your_db_name
       - key: DB_USERNAME
-        value: fintrack1
+        value: your_db_user
       - key: DB_PASSWORD
-        value: Q2ZASbo3J2c2oHwq8sgCeNMXbsOOjB6F
-    buildCommand: |
-      composer install --optimize-autoloader --no-dev
-    startCommand: php artisan serve --host=0.0.0.0 --port=8000
+        value: your_db_password
