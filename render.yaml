@@ -1,14 +1,9 @@
 services:
   - type: web
     name: fintrack-api
-    env: php
+    env: docker
     plan: free
-    buildCommand: |
-      composer install --optimize-autoloader --no-dev
-      php artisan key:generate --force
-      php artisan migrate --force
-      php artisan db:seed --force
-    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: APP_ENV
         value: production
@@ -17,14 +12,18 @@ services:
       - key: APP_KEY
         sync: false
       - key: DB_CONNECTION
-        value: mysql
+        value: pgsql
       - key: DB_HOST
-        sync: false
+        value: dpg-d40rq2mmcj7s73ep9rf0-a.virginia-postgres.render.com
       - key: DB_PORT
-        value: 3306
+        value: 5432
       - key: DB_DATABASE
-        sync: false
+        value: fintrack_3fzq
       - key: DB_USERNAME
-        sync: false
+        value: fintrack1
       - key: DB_PASSWORD
-        sync: false
+        value: Q2ZASbo3J2c2oHwq8sgCeNMXbsOOjB6F
+      - key: MAIL_MAILER
+        value: log
+      - key: APP_URL
+        value: https://your-app-on-render.onrender.com
