@@ -29,15 +29,8 @@ RUN composer install --no-dev --optimize-autoloader
 # Set correct permissions for storage and cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Generate application key (safe even if APP_KEY is already set)
-RUN php artisan key:generate --force || true
-
-# Run migrations and seeders (optional)
-RUN php artisan migrate --force || true
-RUN php artisan db:seed --force || true
-
-# Expose the port Laravel will run on
+# Expose the Render-assigned port
 EXPOSE 10000
 
-# Start Laravel's built-in server
-CMD php artisan serve --host=0.0.0.0 --port=10000
+# Start Laravel's built-in server on Render's dynamic port
+CMD php artisan serve --host=0.0.0.0 --port=$PORT
