@@ -1,5 +1,5 @@
-# 1. Use official PHP image with Apache
-FROM php:8.2-apache
+# 1. Use official PHP image with necessary extensions
+FROM php:8.2-fpm
 
 # 2. Set working directory
 WORKDIR /var/www/html
@@ -8,34 +8,34 @@ WORKDIR /var/www/html
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    libpq-dev \
     libzip-dev \
-    zip \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    libonig-dev \
+    libpng-dev \
+    curl \
+    && docker-php-ext-install pdo pdo_mysql zip mbstring gd
 
-# 4. Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# 4. Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 5. Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# 6. Copy app files
+# 5. Copy project files
 COPY . .
 
-# 7. Install PHP dependencies
-RUN composer install --optimize-autoloader --no-dev
+# 6. Copy example env and install PHP dependencies
+RUN cp .env.example .env
+RUN composer install --no-dev --optimize-autoloader
 
-# 8. Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# 7. Set permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# 9. Generate app key (optional if you already have APP_KEY)
-RUN php artisan key:generate --force
+# 8. Generate APP_KEY (optional, can skip if using Render APP_KEY env var)
+# RUN php artisan key:generate --force
 
-# 10. Run migrations and seeders during build
-RUN php artisan migrate --force && php artisan db:seed --force
+# 9. Run migrations and seeders
+RUN php artisan migrate --force
+RUN php artisan db:seed --force
 
-# 11. Expose port
-EXPOSE 10000
+# 10. Expose port
+EXPOSE 8000
 
-# 12. Start Apache
-CMD ["apache2-foreground"]
+# 11. Start the Laravel server
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
