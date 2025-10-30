@@ -32,5 +32,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Expose the Render-assigned port
 EXPOSE 10000
 
-# Start Laravel's built-in server on Render's dynamic port
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# Run migrations automatically, then start Laravel's server
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
