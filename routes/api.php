@@ -6,6 +6,8 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\ProfileController; // ✅ Add this line
+use App\Http\Controllers\BudgetController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::post('register', [AuthController::class, 'register']);
@@ -34,4 +36,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // ✅ Profile routes
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile', [ProfileController::class, 'update']);
+    
+    //Budget routes
+     Route::get('budgets', [BudgetController::class, 'index']);
+    Route::post('budgets', [BudgetController::class, 'store']);
+    Route::put('budgets/{budget}', [BudgetController::class, 'update']);
+    Route::delete('budgets/{budget}', [BudgetController::class, 'destroy']);
+     Route::get('budgets/summary', [BudgetController::class, 'summary']);
 });

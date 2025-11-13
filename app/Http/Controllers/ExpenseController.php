@@ -6,6 +6,8 @@ use App\Models\Expense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Models\Budget;
+use Carbon\Carbon;
 
 class ExpenseController extends Controller
 {
@@ -15,23 +17,50 @@ class ExpenseController extends Controller
         return response()->json($expenses);
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'amount'      => 'required|numeric',
-            'date'        => 'required|date',
-            'category'    => 'nullable|string|max:100',
-        ]);
+   
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'title'       => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'amount'      => 'required|numeric',
+        'date'        => 'required|date',
+        'category'    => 'nullable|string|max:100',
+    ]);
 
-        $data['slug'] = Str::slug($data['title'] . '-' . uniqid());
+    $data['slug'] = Str::slug($data['title'] . '-' . uniqid());
 
-        $expense = Auth::user()->expenses()->create($data);
+    $expense = Auth::user()->expenses()->create($data);
 
-        return response()->json($expense, 201);
+    // --- Budget Checking ---
+    if (!empty($data['category'])) {
+        $month = Carbon::parse($data['date'])->startOfMonth();
+
+        $budget = Budget::where('user_id', Auth::id())
+            ->where('category', $data['category'])
+            ->where('month', $month)
+            ->first();
+
+        if ($budget) {
+            $totalSpent = Auth::user()->expenses()
+                ->where('category', $data['category'])
+                ->whereMonth('date', $month->month)
+                ->whereYear('date', $month->year)
+                ->sum('amount');
+
+            if ($totalSpent > $budget->limit) {
+                return response()->json([
+                    'expense' => $expense,
+                    'message' => '⚠️ You have exceeded your budget for this category this month!',
+                    'totalSpent' => $totalSpent,
+                    'budgetLimit' => $budget->limit,
+                ], 201);
+            }
+        }
     }
 
+    return response()->json($expense, 201);
+}
     public function show($slug)
     {
         $expense = Expense::where('slug', $slug)
