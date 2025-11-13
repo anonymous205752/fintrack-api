@@ -4,7 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\IncomeController;
-use App\Http\Controllers\SummaryController; // ✅ Add this
+use App\Http\Controllers\SummaryController;
+use App\Http\Controllers\ProfileController; // ✅ Add this line
 use Illuminate\Support\Facades\Route;
 
 Route::post('register', [AuthController::class, 'register']);
@@ -29,4 +30,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ✅ Dashboard route
     Route::get('dashboard', [DashboardController::class, 'DashboardController']);
+
+    // ✅ Profile routes
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::post('/profile', [ProfileController::class, 'update']);
 });
