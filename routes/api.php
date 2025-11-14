@@ -38,9 +38,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile', [ProfileController::class, 'update']);
     
     //Budget routes
-     Route::get('budgets', [BudgetController::class, 'index']);
-    Route::post('budgets', [BudgetController::class, 'store']);
-    Route::put('budgets/{budget}', [BudgetController::class, 'update']);
-    Route::delete('budgets/{budget}', [BudgetController::class, 'destroy']);
-     Route::get('budgets/summary', [BudgetController::class, 'summary']);
+    Route::get('budgets', [BudgetController::class, 'index']);
+Route::post('budgets', [BudgetController::class, 'store']);
+Route::get('budgets/{slug}', [BudgetController::class, 'show']);
+Route::put('budgets/{slug}', [BudgetController::class, 'update']);
+Route::delete('budgets/{slug}', [BudgetController::class, 'destroy']);
+Route::get('budgets/summary', [BudgetController::class, 'summary']);
+
 });

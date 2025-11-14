@@ -6,8 +6,7 @@ use App\Models\Budget;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use App\Models\Expense;
-
+use Illuminate\Support\Str;
 
 class BudgetController extends Controller
 {
@@ -21,7 +20,7 @@ class BudgetController extends Controller
     }
 
     /**
-     * Create a new budget or update if exists for same category & month
+     * Create a new budget (slug included)
      */
     public function store(Request $request)
     {
@@ -31,34 +30,53 @@ class BudgetController extends Controller
             'month'    => 'required|date',
         ]);
 
-        $budget = Budget::updateOrCreate(
-            [
-                'user_id'  => Auth::id(),
-                'category' => $request->category,
-                'month'    => $request->month,
-            ],
-            ['limit' => $request->limit]
-        );
+        $slug = Str::slug($request->category . '-' . uniqid());
+
+        $budget = Budget::create([
+            'user_id'  => Auth::id(),
+            'category' => $request->category,
+            'limit'    => $request->limit,
+            'month'    => $request->month,
+            'slug'     => $slug,
+        ]);
 
         return response()->json([
-            'message' => 'Budget set successfully',
+            'message' => 'Budget created successfully',
             'budget'  => $budget
         ]);
     }
 
     /**
-     * Update an existing budget
+     * Show a single budget using slug
      */
-    public function update(Request $request, Budget $budget)
+    public function show($slug)
     {
-        // Ensure the budget belongs to the authenticated user
-        $this->authorize('update', $budget);
+        $budget = Budget::where('slug', $slug)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        return response()->json($budget);
+    }
+
+    /**
+     * Update budget using slug
+     */
+    public function update(Request $request, $slug)
+    {
+        $budget = Budget::where('slug', $slug)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
         $request->validate([
             'category' => 'sometimes|string|max:255',
             'limit'    => 'sometimes|numeric',
             'month'    => 'sometimes|date',
         ]);
+
+        // If category changes, regenerate slug
+        if ($request->category) {
+            $budget->slug = Str::slug($request->category . '-' . uniqid());
+        }
 
         $budget->update($request->only(['category', 'limit', 'month']));
 
@@ -69,11 +87,13 @@ class BudgetController extends Controller
     }
 
     /**
-     * Delete a budget
+     * Delete budget using slug
      */
-    public function destroy(Budget $budget)
+    public function destroy($slug)
     {
-        $this->authorize('delete', $budget);
+        $budget = Budget::where('slug', $slug)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
         $budget->delete();
 
@@ -81,7 +101,11 @@ class BudgetController extends Controller
             'message' => 'Budget deleted successfully'
         ]);
     }
-     public function summary()
+
+    /**
+     * Monthly summary: budget vs spending
+     */
+    public function summary()
     {
         $user = Auth::user();
         $currentMonth = Carbon::now()->startOfMonth();
@@ -104,6 +128,7 @@ class BudgetController extends Controller
                 'total_spent'    => $totalSpent,
                 'remaining'      => $budget->limit - $totalSpent,
                 'overspent'      => $totalSpent > $budget->limit,
+                'slug'           => $budget->slug,
             ];
         });
 
