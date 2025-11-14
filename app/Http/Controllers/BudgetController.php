@@ -20,7 +20,7 @@ class BudgetController extends Controller
     }
 
     /**
-     * Create a new budget (slug included)
+     * Create a new budget (slug = category, unique)
      */
     public function store(Request $request)
     {
@@ -30,7 +30,16 @@ class BudgetController extends Controller
             'month'    => 'required|date',
         ]);
 
-        $slug = Str::slug($request->category . '-' . uniqid());
+        // Generate slug from category
+        $slug = Str::slug($request->category);
+        $originalSlug = $slug;
+        $counter = 2;
+
+        // Ensure uniqueness per user
+        while (Budget::where('slug', $slug)->where('user_id', Auth::id())->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
 
         $budget = Budget::create([
             'user_id'  => Auth::id(),
@@ -73,9 +82,22 @@ class BudgetController extends Controller
             'month'    => 'sometimes|date',
         ]);
 
-        // If category changes, regenerate slug
-        if ($request->category) {
-            $budget->slug = Str::slug($request->category . '-' . uniqid());
+        // If category changes, regenerate unique slug
+        if ($request->has('category')) {
+            $newSlug = Str::slug($request->category);
+            $originalSlug = $newSlug;
+            $counter = 2;
+
+            while (Budget::where('slug', $newSlug)
+                ->where('id', '!=', $budget->id)
+                ->where('user_id', Auth::id())
+                ->exists()
+            ) {
+                $newSlug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+
+            $budget->slug = $newSlug;
         }
 
         $budget->update($request->only(['category', 'limit', 'month']));

@@ -12,17 +12,28 @@ return new class extends Migration
    public function up(): void
 {
     Schema::table('budgets', function (Blueprint $table) {
-        $table->string('slug')->nullable()->after('id'); // temporarily nullable
+        $table->string('slug')->nullable()->unique()->after('category');
     });
 
     // Backfill slug for existing rows
     $budgets = \App\Models\Budget::all();
     foreach ($budgets as $budget) {
-        $budget->slug = \Illuminate\Support\Str::slug($budget->category . '-' . uniqid());
+        $slug = \Illuminate\Support\Str::slug($budget->category);
+
+        // Ensure uniqueness
+        $originalSlug = $slug;
+        $counter = 2;
+
+        while (\App\Models\Budget::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        $budget->slug = $slug;
         $budget->save();
     }
 
-    // Make slug NOT NULL
+    // Make slug required
     Schema::table('budgets', function (Blueprint $table) {
         $table->string('slug')->nullable(false)->change();
     });

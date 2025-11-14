@@ -27,15 +27,37 @@ class Budget extends Model
      * Auto-generate slug if not provided
      */
     protected static function boot()
-    {
-        parent::boot();
+{
+    parent::boot();
 
-        static::creating(function ($budget) {
-            if (empty($budget->slug)) {
-                $budget->slug = Str::slug($budget->category . '-' . uniqid());
+    static::creating(function ($budget) {
+        $slug = Str::slug($budget->category);
+        $originalSlug = $slug;
+        $counter = 2;
+
+        while (Budget::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        $budget->slug = $slug;
+    });
+
+    static::updating(function ($budget) {
+        if ($budget->isDirty('category')) {
+            $slug = Str::slug($budget->category);
+            $originalSlug = $slug;
+            $counter = 2;
+
+            while (Budget::where('slug', $slug)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
             }
-        });
-    }
+
+            $budget->slug = $slug;
+        }
+    });
+}
 
     /**
      * Budget belongs to a User
