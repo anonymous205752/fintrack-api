@@ -18,56 +18,49 @@ class Budget extends Model
         'slug',
     ];
 
-    // Convert month to Carbon instance automatically
     protected $casts = [
         'month' => 'date',
     ];
 
-    /**
-     * Auto-generate slug if not provided
-     */
     protected static function boot()
-{
-    parent::boot();
+    {
+        parent::boot();
 
-    static::creating(function ($budget) {
-        $slug = Str::slug($budget->category);
-        $originalSlug = $slug;
-        $counter = 2;
-
-        while (Budget::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
-        }
-
-        $budget->slug = $slug;
-    });
-
-    static::updating(function ($budget) {
-        if ($budget->isDirty('category')) {
+        static::creating(function ($budget) {
             $slug = Str::slug($budget->category);
             $originalSlug = $slug;
             $counter = 2;
 
-            while (Budget::where('slug', $slug)->exists()) {
+            while (Budget::where('slug', $slug)->where('user_id', $budget->user_id)->exists()) {
                 $slug = $originalSlug . '-' . $counter;
                 $counter++;
             }
 
             $budget->slug = $slug;
-        }
-    });
-}
+        });
 
-    /**
-     * Budget belongs to a User
-     */
+        static::updating(function ($budget) {
+            if ($budget->isDirty('category')) {
+                $slug = Str::slug($budget->category);
+                $originalSlug = $slug;
+                $counter = 2;
+
+                while (Budget::where('slug', $slug)
+                    ->where('user_id', $budget->user_id)
+                    ->where('id', '!=', $budget->id)
+                    ->exists()
+                ) {
+                    $slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
+
+                $budget->slug = $slug;
+            }
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    public function category()
-{
-    return $this->belongsTo(Category::class);
-}
 }
