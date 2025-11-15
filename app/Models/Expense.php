@@ -29,7 +29,6 @@ class Expense extends Model
             $slug = $baseSlug;
             $count = 1;
 
-            // Keep checking until we find a unique slug
             while (self::where('slug', $slug)->exists()) {
                 $slug = "{$baseSlug}-{$count}";
                 $count++;
@@ -43,9 +42,4 @@ class Expense extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function category()
-{
-    return $this->belongsTo(Category::class);
-}
-
 }
